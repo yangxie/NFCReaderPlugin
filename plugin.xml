@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+    id="com"
+    version="0.0.1">
+    <name>NFCReaderPlugin</name>
+    <description>Cordova plugin to communicate with the ACR122 NFC card reader</description>
+    <license>MIT</license>
+    <keywords>ACR122, phonegap plugin, android</keywords>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="NFCReader">
+                <param name="android-package" value="com.fivestars.mtab.plugin.NFCReader"/>
+            </feature>
+        </config-file>
+        <source-file src="src/com/fivestars/mtab/plugin/NFCReader.java" target-dir="src/com/fivestars/mtab/plugin" />
+        <source-file src="src/com/fivestars/mtab/plugin/UsbBroadcastReceiver.java" target-dir="src/com/fivestars/mtab/plugin" />
+    </platform>
+</plugin>
