@@ -2,6 +2,8 @@ package com.fivestars.mtab.plugin;
 
 import org.apache.cordova.CallbackContext;
 
+import com.acs.smartcard.Reader;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,13 +14,15 @@ import android.hardware.usb.UsbManager;
 public class UsbBroadcastReceiver extends BroadcastReceiver{
 	private CallbackContext callbackContext;
 	private Activity activity;
+	private Reader mReader;
 	 
 	private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
 	 
 	
-	public UsbBroadcastReceiver(CallbackContext callbackContext, Activity activity) {
+	public UsbBroadcastReceiver(CallbackContext callbackContext, Activity activity, Reader mReader) {
 		this.callbackContext = callbackContext;
 		this.activity = activity;
+		this.mReader = mReader;
 	}
 	 
 	public void onReceive(Context context, Intent intent) {
@@ -26,9 +30,12 @@ public class UsbBroadcastReceiver extends BroadcastReceiver{
         if (ACTION_USB_PERMISSION.equals(action)) {
              synchronized (this) {
                  UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                 if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                     if(device != null){
-                    	 callbackContext.success("Permission to connect to the device was accepted!");
+                 if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) && device != null) {
+                	 try {
+                		 mReader.open(device);
+                		 callbackContext.success("Permission to connect to the device was accepted!");
+                	 }catch (Exception e) {
+                		 callbackContext.success("Permission to connect to the device was accepted, but open reader failed");
                      }
                  }
                  else {

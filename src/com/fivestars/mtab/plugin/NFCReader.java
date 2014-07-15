@@ -55,7 +55,7 @@ public class NFCReader extends CordovaPlugin {
                 mReader = new Reader(mManager);
                 setupReader();
                 mPermissionIntent = PendingIntent.getBroadcast(cordova.getActivity(), 0, new Intent(ACTION_USB_PERMISSION), 0);
-                mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity());
+                mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity(), mReader);
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ACTION_USB_PERMISSION);
                 filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
