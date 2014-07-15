@@ -28,6 +28,8 @@ public class NFCReader extends CordovaPlugin {
     private Reader mReader;
     private PendingIntent mPermissionIntent;
     private UsbBroadcastReceiver mReceiver;
+    
+    private CallbackContext readCallback;
 
     @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException { 
@@ -51,24 +53,32 @@ public class NFCReader extends CordovaPlugin {
             public void run() {
                 mManager = (UsbManager) cordova.getActivity().getSystemService(Context.USB_SERVICE);
                 mReader = new Reader(mManager);
+                setupReader();
                 mPermissionIntent = PendingIntent.getBroadcast(cordova.getActivity(), 0, new Intent(ACTION_USB_PERMISSION), 0);
                 mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity());
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ACTION_USB_PERMISSION);
                 filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
                 cordova.getActivity().registerReceiver(mReceiver, filter);
+                
+                boolean requested = false;
 
                 for (UsbDevice device : mManager.getDeviceList().values()) {
                     if (mReader.isSupported(device)) {
                         // Request permission
+                    	requested = true;
                         mManager.requestPermission(device, mPermissionIntent);
+                        break;
                     }
                 }
-                callbackContext.error("No device found!");
+                
+                if (!requested) {
+                	callbackContext.error("No device found!");
+                }
             }
         });
     }
-
+    
     private void registerReadCallback(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
@@ -81,6 +91,46 @@ public class NFCReader extends CordovaPlugin {
                 callbackContext.sendPluginResult(pluginResult);
             }
         });
+    }
+    
+    /**
+     * Setup reader when reader state changed. For now we only care when a card present
+     * 
+     */
+    private void setupReader() {
+    	mReader.setOnStateChangeListener(new Reader.OnStateChangeListener() {
+            @Override
+            public void onStateChange(int slotNum, int prevState, int currState) {
+                // Create output string
+                byte[] response = new byte[300];
+                if (currState == Reader.CARD_PRESENT) {
+                    response = readFromCard(slotNum);
+                    updateReceivedData(response);
+                }
+            }
+        });
+    }
+
+    public byte[] readFromCard(int slotNum) {
+        byte[] command = {(byte) 0xFF, (byte) 0xCA, 0x00, 0x00, 0x08 };
+        byte[] response = new byte[300];
+        try {
+        	mReader.power(slotNum, Reader.CARD_WARM_RESET);
+            mReader.setProtocol(slotNum, Reader.PROTOCOL_T0 | Reader.PROTOCOL_T1);
+            mReader.transmit(slotNum, command, command.length, response,
+                    response.length);
+        } catch (ReaderException e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
+    
+    private void updateReceivedData(byte[] data) {
+        if( readCallback != null ) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, data);
+            result.setKeepCallback(true);
+            readCallback.sendPluginResult(result);
+        }
     }
 
     /**
