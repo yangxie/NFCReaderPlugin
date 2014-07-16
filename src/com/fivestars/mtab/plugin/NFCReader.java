@@ -1,5 +1,7 @@
 package com.fivestars.mtab.plugin;
 
+import java.io.UnsupportedEncodingException;
+
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -21,8 +23,10 @@ import com.acs.smartcard.ReaderException;
 public class NFCReader extends CordovaPlugin {
     private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
     private static final String ACTION_READ_CALLBACK = "registerReadCallback";
-
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
+    
+    
+    final private static char[] hexArray = "0123456789abcdef".toCharArray();
 
     private UsbManager mManager;
     private Reader mReader;
@@ -84,7 +88,7 @@ public class NFCReader extends CordovaPlugin {
             public void run() {
                 readCallback = callbackContext;
                 JSONObject returnObj = new JSONObject();
-                addProperty(returnObj, "registerReadCallback", "true");
+                //addProperty(returnObj, "registerReadCallback", "true");
                 // Keep the callback
                 PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
                 pluginResult.setKeepCallback(true);
@@ -105,7 +109,7 @@ public class NFCReader extends CordovaPlugin {
                 byte[] response = new byte[300];
                 if (currState == Reader.CARD_PRESENT) {
                     response = readFromCard(slotNum);
-                    updateReceivedData(response);
+                    updateReceivedData(bytesToHex(response).substring(0, 14));
                 }
             }
         });
@@ -125,7 +129,7 @@ public class NFCReader extends CordovaPlugin {
         return response;
     }
     
-    private void updateReceivedData(byte[] data) {
+    private void updateReceivedData(String data) {
         if( readCallback != null ) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, data);
             result.setKeepCallback(true);
@@ -133,16 +137,14 @@ public class NFCReader extends CordovaPlugin {
         }
     }
 
-    /**
-     * Utility method to add some properties to a {@link JSONObject}
-     * @param obj the json object where to add the new property
-     * @param key property key
-     * @param value value of the property
-     */
-    private void addProperty(JSONObject obj, String key, Object value) {
-        try {
-            obj.put(key, value);
+    private String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
-        catch (JSONException e){}
+        return new String(hexChars);
     }
+
 }
