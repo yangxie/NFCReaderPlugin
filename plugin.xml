@@ -22,6 +22,7 @@
 			<!-- Vendor ID and product ID for  ACR 122 -->
 			<usb-device vendor-id="1839" product-id="8704" />			
     	</config-file>
+    	<source-file src="src/device_filter.xml" target-dir="res/xml" />
         <source-file src="src/com/fivestars/mtab/plugin/NFCReader.java" target-dir="src/com/fivestars/mtab/plugin" />
         <source-file src="src/com/fivestars/mtab/plugin/UsbBroadcastReceiver.java" target-dir="src/com/fivestars/mtab/plugin" />
     </platform>
