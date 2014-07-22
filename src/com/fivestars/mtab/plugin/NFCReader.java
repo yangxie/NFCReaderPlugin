@@ -1,9 +1,7 @@
 package com.fivestars.mtab.plugin;
 
-import java.io.UnsupportedEncodingException;
 
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -25,7 +23,6 @@ public class NFCReader extends CordovaPlugin {
     private static final String ACTION_READ_CALLBACK = "registerReadCallback";
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     
-    
     final private static char[] hexArray = "0123456789abcdef".toCharArray();
 
     private UsbManager mManager;
@@ -37,7 +34,6 @@ public class NFCReader extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException { 
-        JSONObject arg_object = args.optJSONObject(0);
         // request permission
         if (ACTION_REQUEST_PERMISSION.equals(action)) {
             requestPermission(callbackContext);
@@ -51,7 +47,11 @@ public class NFCReader extends CordovaPlugin {
         // the action doesn't exist
         return false;
     }
-
+    
+    /**
+     * request permission to connect usb device.
+     * @param callbackContext
+     */
     private void requestPermission(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
@@ -83,6 +83,10 @@ public class NFCReader extends CordovaPlugin {
         });
     }
     
+    /**
+     * register callback function, which will be called when we scanning a card.
+     * @param callbackContext
+     */
     private void registerReadCallback(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
@@ -97,7 +101,7 @@ public class NFCReader extends CordovaPlugin {
     }
     
     /**
-     * Setup reader when reader state changed. For now we only care when a card present
+     * Setup card state change listener. For now we only care when a card present
      * 
      */
     private void setupReader() {
@@ -113,13 +117,22 @@ public class NFCReader extends CordovaPlugin {
             }
         });
     }
-
+    
+    /**
+     * read card uid from card
+     * @param slotNum
+     * @return
+     */
     public byte[] readFromCard(int slotNum) {
+    	// read card uid command
         byte[] command = {(byte) 0xFF, (byte) 0xCA, 0x00, 0x00, 0x08 };
         byte[] response = new byte[300];
         try {
+        	// activate card
         	mReader.power(slotNum, Reader.CARD_WARM_RESET);
+        	// setup protocol
             mReader.setProtocol(slotNum, Reader.PROTOCOL_T0 | Reader.PROTOCOL_T1);
+            // read data from card
             mReader.transmit(slotNum, command, command.length, response,
                     response.length);
         } catch (ReaderException e) {
@@ -128,6 +141,10 @@ public class NFCReader extends CordovaPlugin {
         return response;
     }
     
+    /**
+     * send data back via registered callback
+     * @param data
+     */
     private void updateReceivedData(String data) {
         if( readCallback != null ) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, data);
@@ -135,7 +152,12 @@ public class NFCReader extends CordovaPlugin {
             readCallback.sendPluginResult(result);
         }
     }
-
+    
+    /**
+     * Convert bytes to hex string
+     * @param bytes
+     * @return
+     */
     private String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
         for ( int j = 0; j < bytes.length; j++ ) {

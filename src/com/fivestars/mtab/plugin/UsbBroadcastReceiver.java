@@ -32,6 +32,7 @@ public class UsbBroadcastReceiver extends BroadcastReceiver{
                  UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                  if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) && device != null) {
                 	 try {
+                		 // open reader
                 		 mReader.open(device);
                 		 callbackContext.success("Permission to connect to the device was accepted!");
                 	 }catch (Exception e) {
