@@ -15,14 +15,6 @@
                 <param name="android-package" value="com.fivestars.mtab.plugin.NFCReader"/>
             </feature>
         </config-file>
-        <meta-data
-                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />
-        <config-file parent="/*" target="res/xml/device_filter.xml">			
-			<!-- Vendor ID and product ID for  ACR 122 -->
-			<usb-device vendor-id="1839" product-id="8704" />			
-    	</config-file>
-    	<source-file src="src/device_filter.xml" target-dir="res/xml" />
         <source-file src="src/com/fivestars/mtab/plugin/NFCReader.java" target-dir="src/com/fivestars/mtab/plugin" />
         <source-file src="src/com/fivestars/mtab/plugin/UsbBroadcastReceiver.java" target-dir="src/com/fivestars/mtab/plugin" />
     </platform>

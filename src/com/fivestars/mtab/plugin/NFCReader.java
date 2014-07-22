@@ -88,7 +88,6 @@ public class NFCReader extends CordovaPlugin {
             public void run() {
                 readCallback = callbackContext;
                 JSONObject returnObj = new JSONObject();
-                //addProperty(returnObj, "registerReadCallback", "true");
                 // Keep the callback
                 PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
                 pluginResult.setKeepCallback(true);
