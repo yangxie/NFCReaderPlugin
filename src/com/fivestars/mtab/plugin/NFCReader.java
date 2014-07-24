@@ -31,12 +31,17 @@ public class NFCReader extends CordovaPlugin {
     private UsbBroadcastReceiver mReceiver;
     
     private CallbackContext readCallback;
+    
+    private boolean hasInited = false;
 
     @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
         // request permission
         if (ACTION_REQUEST_PERMISSION.equals(action)) {
-            if (mReader == null || !mReader.isOpened()) requestPermission(callbackContext);
+            if (mReader == null || mManager == null) {
+            	initReader();
+            }
+            requestPermission(callbackContext);
             return true;
         }
         // Register read callback
@@ -49,21 +54,28 @@ public class NFCReader extends CordovaPlugin {
     }
     
     /**
+     * init reader
+     */
+    public void initReader() {
+    	mManager = (UsbManager) cordova.getActivity().getSystemService(Context.USB_SERVICE);
+        mReader = new Reader(mManager);
+        setupReader();
+    }
+    
+    /**
      * request permission to connect usb device.
      * @param callbackContext
      */
     private void requestPermission(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                mManager = (UsbManager) cordova.getActivity().getSystemService(Context.USB_SERVICE);
-                mReader = new Reader(mManager);
-                setupReader();
-                mPermissionIntent = PendingIntent.getBroadcast(cordova.getActivity(), 0, new Intent(ACTION_USB_PERMISSION), 0);
-                mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity(), mReader);
+            	mPermissionIntent = PendingIntent.getBroadcast(cordova.getActivity(), 0, new Intent(ACTION_USB_PERMISSION), 0);
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ACTION_USB_PERMISSION);
                 filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+            	mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity(), mReader);
                 cordova.getActivity().registerReceiver(mReceiver, filter);
+            
                 
                 boolean requested = false;
 

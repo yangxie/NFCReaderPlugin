@@ -36,7 +36,7 @@ public class UsbBroadcastReceiver extends BroadcastReceiver{
                 		 mReader.open(device);
                 		 callbackContext.success("Permission to connect to the device was accepted!");
                 	 }catch (Exception e) {
-                		 callbackContext.success("Permission to connect to the device was accepted, but open reader failed");
+                		 callbackContext.error("Permission to connect to the device was accepted, but open reader failed");
                      }
                  }
                  else {
