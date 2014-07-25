@@ -22,6 +22,8 @@ public class NFCReader extends CordovaPlugin {
     private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
     private static final String ACTION_READ_CALLBACK = "registerReadCallback";
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
+    private static final String ACTION_USB_DETACHED_CALLBACK = "registerDetachedCallback";
+    private static final String ACTION_USB_DETACHED = "android.hardware.usb.action.USB_DEVICE_DETACHED";
     
     final private static char[] hexArray = "0123456789abcdef".toCharArray();
 
@@ -31,7 +33,9 @@ public class NFCReader extends CordovaPlugin {
     private UsbBroadcastReceiver mReceiver;
     
     private CallbackContext readCallback;
-    
+    private CallbackContext usbDetachedCallback;
+   
+
     @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
         // request permission
@@ -46,6 +50,16 @@ public class NFCReader extends CordovaPlugin {
         else if (ACTION_READ_CALLBACK.equals(action)) {
             registerReadCallback(callbackContext);
             return true;
+        }
+        // Register detachedCallback
+        else if (ACTION_USB_DETACHED_CALLBACK.equals(action)) {
+        	registerUsbDetachedCallback(callbackContext);
+        	return true;
+        }
+        // call usb detached callback
+        else if (ACTION_USB_DETACHED.equals(action)) {
+        	updateReceivedData("false", usbDetachedCallback);
+        	return true;
         }
         // the action doesn't exist
         return false;
@@ -110,6 +124,19 @@ public class NFCReader extends CordovaPlugin {
         });
     }
     
+    private void registerUsbDetachedCallback(final CallbackContext callbackContext) {
+    	cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+            	usbDetachedCallback = callbackContext;
+                JSONObject returnObj = new JSONObject();
+                // Keep the callback
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
+                pluginResult.setKeepCallback(true);
+                callbackContext.sendPluginResult(pluginResult);
+            }
+        });
+    }
+    
     /**
      * Setup card state change listener. For now we only care when a card present
      * 
@@ -122,7 +149,7 @@ public class NFCReader extends CordovaPlugin {
                 byte[] response = new byte[300];
                 if (currState == Reader.CARD_PRESENT) {
                     response = readFromCard(slotNum);
-                    updateReceivedData(bytesToHex(response).substring(0, 14));
+                    updateReceivedData(bytesToHex(response).substring(0, 14), readCallback);
                 }
             }
         });
@@ -155,11 +182,11 @@ public class NFCReader extends CordovaPlugin {
      * send data back via registered callback
      * @param data
      */
-    private void updateReceivedData(String data) {
-        if( readCallback != null ) {
+    private void updateReceivedData(String data, CallbackContext callback) {
+        if( callback != null ) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, data);
             result.setKeepCallback(true);
-            readCallback.sendPluginResult(result);
+            callback.sendPluginResult(result);
         }
     }
     
