@@ -32,8 +32,6 @@ public class NFCReader extends CordovaPlugin {
     
     private CallbackContext readCallback;
     
-    private boolean hasInited = false;
-
     @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
         // request permission
