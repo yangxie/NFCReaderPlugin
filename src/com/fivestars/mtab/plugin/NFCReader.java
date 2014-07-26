@@ -22,7 +22,7 @@ public class NFCReader extends CordovaPlugin {
     private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
     private static final String ACTION_READ_CALLBACK = "registerReadCallback";
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
-    private static final String ACTION_USB_DETACHED_CALLBACK = "registerDetachedCallback";
+    private static final String ACTION_USB_DETACHED_CALLBACK = "registerUsbDetachedCallback";
     private static final String ACTION_USB_DETACHED = "android.hardware.usb.action.USB_DEVICE_DETACHED";
     
     final private static char[] hexArray = "0123456789abcdef".toCharArray();
