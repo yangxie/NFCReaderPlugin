@@ -15,14 +15,16 @@ public class UsbBroadcastReceiver extends BroadcastReceiver{
 	private CallbackContext callbackContext;
 	private Activity activity;
 	private Reader mReader;
+	private boolean[] connected;
 	 
 	private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
-	 
+	private static final String ACTION_USB_DETACHED = "android.hardware.usb.action.USB_DEVICE_DETACHED";
 	
-	public UsbBroadcastReceiver(CallbackContext callbackContext, Activity activity, Reader mReader) {
+	public UsbBroadcastReceiver(CallbackContext callbackContext, Activity activity, Reader mReader, boolean[] connected) {
 		this.callbackContext = callbackContext;
 		this.activity = activity;
 		this.mReader = mReader;
+		this.connected = connected;
 	}
 	 
 	public void onReceive(Context context, Intent intent) {
@@ -34,6 +36,7 @@ public class UsbBroadcastReceiver extends BroadcastReceiver{
                 	 try {
                 		 // open reader
                 		 mReader.open(device);
+                		 connected[0] = true;
                 		 callbackContext.success("Permission to connect to the device was accepted!");
                 	 }catch (Exception e) {
                 		 callbackContext.error("Permission to connect to the device was accepted, but open reader failed");
@@ -43,6 +46,10 @@ public class UsbBroadcastReceiver extends BroadcastReceiver{
                      callbackContext.error("permission denied for device " + device);
                  }
             }
+        }else if (ACTION_USB_DETACHED.equals(action)) {
+        	synchronized (this) {
+        		connected[0] = false;
+        	}
         }
     }
 }
