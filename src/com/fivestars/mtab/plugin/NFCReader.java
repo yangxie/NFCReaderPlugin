@@ -33,7 +33,7 @@ public class NFCReader extends CordovaPlugin {
     private CallbackContext readCallback;
     
     private boolean[] connected = new boolean[1];
-    
+    private boolean[] permissionCount = new boolean[1];
    
     @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
@@ -42,6 +42,7 @@ public class NFCReader extends CordovaPlugin {
             if (mReader == null || mManager == null) {
             	initReader();
             }
+            
             requestPermission(callbackContext);
             return true;
         }
@@ -76,7 +77,7 @@ public class NFCReader extends CordovaPlugin {
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ACTION_USB_PERMISSION);
                 filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-            	mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity(), mReader, connected);
+            	mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity(), mReader, connected, permissionCount);
                 cordova.getActivity().registerReceiver(mReceiver, filter);
             
                 
@@ -86,7 +87,13 @@ public class NFCReader extends CordovaPlugin {
                     if (mReader.isSupported(device)) {
                         // Request permission
                     	requested = true;
-                        mManager.requestPermission(device, mPermissionIntent);
+                    	if (!permissionCount[0]) {
+                        	permissionCount[0] = true;
+                        	mManager.requestPermission(device, mPermissionIntent);
+                        }else {
+                        	callbackContext.error("Already requesting permission now");
+                        }
+                    	
                         break;
                     }
                 }
