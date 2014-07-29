@@ -23,7 +23,8 @@ public class NFCReader extends CordovaPlugin {
     private static final String ACTION_READ_CALLBACK = "registerReadCallback";
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     
-    final private static char[] hexArray = "0123456789abcdef".toCharArray();
+    private static final char[] hexArray = "0123456789abcdef".toCharArray();
+    private static final String badCode = "63000000000000";
 
     private UsbManager mManager;
     private Reader mReader;
@@ -134,7 +135,10 @@ public class NFCReader extends CordovaPlugin {
                 byte[] response = new byte[300];
                 if (currState == Reader.CARD_PRESENT) {
                     response = readFromCard(slotNum);
-                    updateReceivedData(bytesToHex(response).substring(0, 14), readCallback);
+                    String cardId = bytesToHex(response).substring(0, 14);
+                    if (!badCode.equals(cardId)) {
+                        updateReceivedData(cardId, readCallback);
+                    }
                 }
             }
         });
