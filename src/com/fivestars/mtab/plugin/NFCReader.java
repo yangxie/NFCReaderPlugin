@@ -22,6 +22,7 @@ public class NFCReader extends CordovaPlugin {
     private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
     private static final String ACTION_READ_CALLBACK = "registerReadCallback";
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
+    private static final String ACTION_DETACH_CALLBACK = "registerDetachCallback";
     
     private static final char[] hexArray = "0123456789abcdef".toCharArray();
     private static final String badCode = "63000000000000";
@@ -32,14 +33,16 @@ public class NFCReader extends CordovaPlugin {
     private UsbBroadcastReceiver mReceiver;
     
     private CallbackContext readCallback;
+    private CallbackContext detachCallback;
     
-    private boolean[] connected = new boolean[1];
     private boolean[] permissionCount = new boolean[1];
    
     @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
         // request permission
         if (ACTION_REQUEST_PERMISSION.equals(action)) {
+        	if (detachCallback == null) return false;
+        	
             if (mReader == null || mManager == null) {
             	initReader();
             }
@@ -49,10 +52,11 @@ public class NFCReader extends CordovaPlugin {
         }
         // Register read callback
         else if (ACTION_READ_CALLBACK.equals(action)) {
-        	if (connected[0]){
-        		registerReadCallback(callbackContext);
-        	}
-            return true;
+        	registerReadCallback(callbackContext);
+        }
+        
+        else if (ACTION_DETACH_CALLBACK.equals(action)) {
+        	registerDetachCallback(callbackContext);
         }
         // the action doesn't exist
         return false;
@@ -78,7 +82,7 @@ public class NFCReader extends CordovaPlugin {
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ACTION_USB_PERMISSION);
                 filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-            	mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity(), mReader, connected, permissionCount);
+            	mReceiver= new UsbBroadcastReceiver(callbackContext, cordova.getActivity(), mReader, detachCallback, permissionCount);
                 cordova.getActivity().registerReceiver(mReceiver, filter);
             
                 
@@ -114,6 +118,19 @@ public class NFCReader extends CordovaPlugin {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 readCallback = callbackContext;
+                JSONObject returnObj = new JSONObject();
+                // Keep the callback
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
+                pluginResult.setKeepCallback(true);
+                callbackContext.sendPluginResult(pluginResult);
+            }
+        });
+    }
+    
+    private void registerDetachCallback(final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+            	detachCallback = callbackContext;
                 JSONObject returnObj = new JSONObject();
                 // Keep the callback
                 PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
