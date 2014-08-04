@@ -41,7 +41,10 @@ public class NFCReader extends CordovaPlugin {
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
         // request permission
         if (ACTION_REQUEST_PERMISSION.equals(action)) {
-        	if (detachCallback == null) return false;
+        	if (detachCallback == null) {
+        		callbackContext.error("callback is null");
+        		return false;
+        	}
         	
             if (mReader == null || mManager == null) {
             	initReader();
@@ -53,11 +56,14 @@ public class NFCReader extends CordovaPlugin {
         // Register read callback
         else if (ACTION_READ_CALLBACK.equals(action)) {
         	registerReadCallback(callbackContext);
+        	return true;
         }
         
         else if (ACTION_DETACH_CALLBACK.equals(action)) {
         	registerDetachCallback(callbackContext);
+        	return true;
         }
+        
         // the action doesn't exist
         return false;
     }
